@@ -140,6 +140,34 @@
         .setting-row label { font-weight: bold; color: var(--text-muted); font-size: 14px; }
         .setting-row input { width: 50%; max-width: 180px; text-align: right; }
 
+        /* 新增：建議建倉區塊樣式 */
+        .setup-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px;
+            margin-top: 12px;
+            font-size: 13px;
+        }
+        .setup-result {
+            color: var(--accent-gold);
+            font-weight: bold;
+            margin-top: 8px;
+            line-height: 1.6;
+        }
+        .btn-apply {
+            background: var(--accent-gold);
+            color: #0f172a;
+            border: none;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 6px;
+        }
+        .btn-apply:hover { background: #e08e0b; }
+
         .action-banner {
             grid-column: 1 / -1;
             background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
@@ -220,10 +248,24 @@
     </div>
 
     <div class="card">
-        <div class="setting-row" style="margin-bottom: 20px;">
+        <div class="setting-row">
             <label><i class="fa-solid fa-vault" style="color: var(--accent-gold); margin-right: 4px;"></i> 初始投入本金 (元)</label>
             <input type="number" id="initial-investment" value="1000000" oninput="updateAndSave()">
         </div>
+
+        <div class="setup-box">
+            <div style="font-weight: bold; color: var(--text-light); margin-bottom: 8px;">
+                <i class="fa-solid fa-compass" style="color:var(--accent-green)"></i> 初始建倉導航（選填）
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: var(--text-muted);">預計買入正二價位：</span>
+                <input type="number" id="setup-target-price" value="200" style="width: 100px; padding: 4px;" oninput="calcSetup()">
+            </div>
+            <div id="setup-result" class="setup-result">導航計算中...</div>
+            <button class="btn-apply" onclick="applySetup()"><i class="fa-solid fa-wand-magic-sparkles"></i> 一鍵帶入下方配置</button>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
 
         <h3 style="margin-top:0; font-size: 16px;">自由資產配置艙</h3>
         <table id="asset-table">
@@ -262,13 +304,19 @@
 </div>
 
 <script>
+    // 暫存建倉計算出來的數值，方便一鍵套用
+    let calculatedShares = 0;
+    let calculatedCash = 0;
+
     window.onload = function() {
         const savedAssets = localStorage.getItem('wealth_assets');
         const savedCash = localStorage.getItem('wealth_cash');
         const savedInitial = localStorage.getItem('wealth_initial');
+        const savedTargetPrice = localStorage.getItem('wealth_target_price');
         
         if (savedCash !== null) document.getElementById('cash-value').value = savedCash;
         if (savedInitial !== null) document.getElementById('initial-investment').value = savedInitial;
+        if (savedTargetPrice !== null) document.getElementById('setup-target-price').value = savedTargetPrice;
 
         if (savedAssets) {
             const assets = JSON.parse(savedAssets);
@@ -277,6 +325,46 @@
             addRow("00631L", "2", 200, 3000); 
         }
         update();
+    }
+
+    // 新增：動態計算建倉股數與現金
+    function calcSetup() {
+        const initial = parseFloat(document.getElementById('initial-investment').value) || 0;
+        const targetPrice = parseFloat(document.getElementById('setup-target-price').value) || 0;
+        const resultDiv = document.getElementById('setup-result');
+
+        if (initial <= 0 || targetPrice <= 0) {
+            resultDiv.innerText = "請輸入有效的本金與預計價位";
+            return;
+        }
+
+        // 1.2 Beta 策略：正二配 60%，現金配 40%
+        const targetStockFund = initial * 0.6;
+        calculatedCash = Math.round(initial * 0.4);
+        calculatedShares = Math.round(targetStockFund / targetPrice);
+
+        resultDiv.innerHTML = `🎯 建議配置比例（正二 60% : 現金 40%）<br>
+                               👉 買入正二股數：<span style="color:white">${calculatedShares.toLocaleString('zh-TW')}</span> 股<br>
+                               👉 留存儲備現金：$${calculatedCash.toLocaleString('zh-TW')} 元`;
+        
+        localStorage.setItem('wealth_target_price', targetPrice);
+    }
+
+    // 新增：一鍵帶入下方配置艙
+    function applySetup() {
+        if (calculatedShares <= 0) return;
+        
+        // 清空現有的資產表格，重新建立一個乾淨的正二欄位
+        const tbody = document.getElementById('asset-body');
+        tbody.innerHTML = "";
+        
+        const targetPrice = parseFloat(document.getElementById('setup-target-price').value) || 0;
+        addRow("00631L", "2", targetPrice, calculatedShares);
+        
+        // 帶入現金
+        document.getElementById('cash-value').value = calculatedCash;
+        
+        updateAndSave();
     }
 
     function addRow(code="", type="2", price=0, qty=0) {
@@ -329,6 +417,8 @@
     }
 
     function update() {
+        calcSetup(); // 每次本金改變，同步重算建倉建議
+        
         const rows = document.querySelectorAll('#asset-body tr');
         let totalStockValue = 0;
         let weightedBeta = 0;
