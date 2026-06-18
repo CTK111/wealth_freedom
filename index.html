@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>智富導航：Beta 1.2 自由平衡儀</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -26,7 +26,7 @@
             color: var(--text-light);
             font-family: 'Noto Sans TC', 'Montserrat', sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 12px;
             display: flex;
             justify-content: center;
         }
@@ -36,11 +36,12 @@
             width: 100%;
             display: grid;
             grid-template-columns: 1fr;
-            gap: 25px;
+            gap: 16px;
         }
 
         @media (min-width: 768px) {
-            .dashboard { grid-template-columns: 1fr 1fr; }
+            .dashboard { grid-template-columns: 1fr 1fr; gap: 25px; }
+            body { padding: 20px; }
         }
 
         header {
@@ -48,22 +49,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px 0;
+            padding: 10px 0;
             border-bottom: 1px solid var(--card-bg);
         }
 
-        h1 { margin: 0; font-size: 26px; letter-spacing: 2px; color: var(--accent-gold); }
-        h1 span { color: var(--text-light); font-weight: 400; font-size: 16px; display: block; }
+        h1 { margin: 0; font-size: 22px; letter-spacing: 1px; color: var(--accent-gold); }
+        h1 span { color: var(--text-light); font-weight: 400; font-size: 13px; display: block; }
 
         @media (min-width: 576px) {
-            h1 span { display: inline; margin-left: 10px; }
+            h1 { font-size: 26px; letter-spacing: 2px; }
+            h1 span { display: inline; margin-left: 10px; font-size: 16px; }
         }
 
         .card {
             background: var(--card-bg);
             border-radius: 20px;
-            padding: 30px;
+            padding: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        @media (min-width: 768px) {
+            .card { padding: 30px; }
         }
 
         .beta-display {
@@ -76,9 +82,9 @@
 
         .gauge-container {
             position: relative;
-            width: 200px;
-            height: 200px;
-            margin: 20px 0;
+            width: 180px;
+            height: 180px;
+            margin: 15px 0;
         }
 
         .gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
@@ -96,58 +102,83 @@
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 42px;
+            font-size: 38px;
             font-weight: 700;
         }
 
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; color: var(--text-muted); font-size: 14px; padding-bottom: 10px; }
-        td { padding: 12px 4px; border-bottom: 1px solid #334155; }
+        /* --- 修正手機版表格擠壓的關鍵 CSS --- */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
+        th { text-align: left; color: var(--text-muted); font-size: 13px; padding-bottom: 8px; }
+        td { padding: 10px 2px; border-bottom: 1px solid #334155; vertical-align: middle; }
         
+        /* 依比例分配表格寬度，防止大位數爆開 */
+        th:nth-child(1), td:nth-child(1) { width: 23%; } /* 代號 */
+        th:nth-child(2), td:nth-child(2) { width: 29%; } /* 類型 */
+        th:nth-child(3), td:nth-child(3) { width: 21%; } /* 現價 */
+        th:nth-child(4), td:nth-child(4) { width: 21%; } /* 股數 */
+        th:nth-child(5), td:nth-child(5) { width: 6%; text-align: right; } /* 刪除 */
+
         input, select {
             background: #0f172a;
             border: 1px solid #334155;
             color: white;
-            padding: 8px;
+            padding: 8px 4px;
             border-radius: 6px;
             width: 100%;
             font-family: inherit;
             box-sizing: border-box;
+            font-size: 14px;
+            text-align: center;
         }
+
+        input[type="text"] { text-align: left; padding-left: 6px; }
 
         input:focus, select:focus {
             outline: none;
             border-color: var(--accent-gold);
         }
 
+        /* 下方看盤看建議區：增加自動折行與自適應字體大小 */
         .action-banner {
             grid-column: 1 / -1;
             background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
             border-left: 5px solid var(--accent-gold);
-            padding: 25px;
+            padding: 20px;
             border-radius: 12px;
             display: flex;
             flex-direction: column;
             gap: 15px;
+            word-break: break-all; /* 防止連續英文字母或數字灌爆版面 */
         }
 
         @media (min-width: 768px) {
-            .action-banner { flex-direction: row; justify-content: space-between; align-items: center; }
+            .action-banner { flex-direction: row; justify-content: space-between; align-items: center; padding: 25px; }
         }
 
-        .rebalance-result { font-size: 18px; }
-        .rebalance-result b { color: var(--accent-gold); font-size: 22px; }
+        .rebalance-result { font-size: 16px; line-height: 1.5; flex: 1; }
+        .rebalance-result b { color: var(--accent-gold); font-size: 18px; word-wrap: break-word; }
+
+        @media (min-width: 576px) {
+            .rebalance-result { font-size: 18px; }
+            .rebalance-result b { font-size: 22px; }
+        }
+
+        .total-display-box { text-align: left; }
+        @media (min-width: 768px) {
+            .total-display-box { text-align: right; }
+        }
 
         .btn-add {
             background: transparent;
             color: var(--accent-green);
             border: 1px dashed var(--accent-green);
-            padding: 10px;
+            padding: 12px;
             width: 100%;
             margin-top: 15px;
             cursor: pointer;
             border-radius: 8px;
             font-weight: bold;
+            font-size: 14px;
         }
 
         .btn-add:hover { background: rgba(16, 185, 129, 0.1); }
@@ -158,6 +189,9 @@
             border: none;
             cursor: pointer;
             font-size: 16px;
+            padding: 0;
+            width: 100%;
+            text-align: right;
         }
     </style>
 </head>
@@ -166,13 +200,13 @@
 <div class="dashboard">
     <header>
         <h1>智富導航 <span>Wealth Navigation System</span></h1>
-        <div style="color: var(--text-muted); font-size: 14px;">
-            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 本地記憶已同步
+        <div style="color: var(--text-muted); font-size: 13px;">
+            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 記憶同步
         </div>
     </header>
 
     <div class="card beta-display">
-        <h3 style="margin:0">當前組合總 Beta 曝險</h3>
+        <h3 style="margin:0; font-size: 16px;">當前組合總 Beta 曝險</h3>
         <div class="gauge-container">
             <svg class="gauge-svg" viewBox="0 0 160 160">
                 <circle class="gauge-bg" cx="80" cy="80" r="70"></circle>
@@ -180,19 +214,19 @@
             </svg>
             <div class="beta-value" id="current-beta">1.20x</div>
         </div>
-        <p style="color: var(--text-muted); margin:0;">目標安全值: <b style="color:white">1.2x</b> | 寬限範圍: <b style="color:white">±10%</b></p>
+        <p style="color: var(--text-muted); margin:0; font-size: 13px;">目標安全值: <b style="color:white">1.2x</b> | 寬限範圍: <b style="color:white">±10%</b></p>
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0">自由資產配置艙</h3>
+        <h3 style="margin-top:0; font-size: 16px;">自由資產配置艙</h3>
         <table id="asset-table">
             <thead>
                 <tr>
-                    <th style="width: 25%;">代號</th>
-                    <th style="width: 30%;">類型</th>
-                    <th style="width: 20%;">現價</th>
-                    <th style="width: 20%;">股數</th>
-                    <th style="width: 5%;"></th>
+                    <th>代號</th>
+                    <th>類型</th>
+                    <th>現價</th>
+                    <th>股數</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody id="asset-body">
@@ -200,11 +234,11 @@
         </table>
         <button class="btn-add" onclick="addRow()"><i class="fa-solid fa-plus"></i> 新增資產欄位</button>
 
-        <hr style="border: 0; border-top: 1px solid #334155; margin: 25px 0;">
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
         
         <div style="display: flex; justify-content: space-between; align-items: center;">
-            <label style="font-weight: bold; color: var(--text-muted);">儲備現金部位 (元)</label>
-            <input type="number" id="cash-value" value="400000" style="width:160px; text-align: right;" oninput="updateAndSave()">
+            <label style="font-weight: bold; color: var(--text-muted); font-size: 14px;">儲備現金部位 (元)</label>
+            <input type="number" id="cash-value" value="400000" style="width:50%; max-width:180px; text-align: right;" oninput="updateAndSave()">
         </div>
     </div>
 
@@ -212,15 +246,14 @@
         <div class="rebalance-result" id="final-advice">
             導航系統評估中...
         </div>
-        <div style="text-align: right;">
-            <div style="font-size: 14px; color: var(--text-muted);">總資產自由估值</div>
-            <div id="total-assets" style="font-size: 28px; font-weight: 700; color: white;">$0</div>
+        <div class="total-display-box">
+            <div style="font-size: 13px; color: var(--text-muted);">總資產自由估值</div>
+            <div id="total-assets" style="font-size: 24px; font-weight: 700; color: white; white-space: nowrap;">$0</div>
         </div>
     </div>
 </div>
 
 <script>
-    // 網頁載入時，先讀取之前存下來的資料
     window.onload = function() {
         const savedAssets = localStorage.getItem('wealth_assets');
         const savedCash = localStorage.getItem('wealth_cash');
@@ -233,7 +266,6 @@
             const assets = JSON.parse(savedAssets);
             assets.forEach(asset => addRow(asset.code, asset.type, asset.price, asset.qty));
         } else {
-            // 如果是第一次打開，給一個預設欄位
             addRow("00631L", "2", 200, 3000);
         }
         update();
@@ -246,8 +278,8 @@
             <td><input type="text" value="${code}" placeholder="代號" oninput="updateAndSave()"></td>
             <td>
                 <select onchange="updateAndSave()">
-                    <option value="2" ${type === "2" ? "selected" : ""}>槓桿正2 (2x)</option>
-                    <option value="1" ${type === "1" ? "selected" : ""}>一般原型 (1x)</option>
+                    <option value="2" ${type === "2" ? "selected" : ""}>正2(2x)</option>
+                    <option value="1" ${type === "1" ? "selected" : ""}>原型(1x)</option>
                 </select>
             </td>
             <td><input type="number" value="${price}" oninput="updateAndSave()"></td>
@@ -325,7 +357,6 @@
 
         const upperLimit = targetBeta * 1.1; 
         const lowerLimit = targetBeta * 0.9; 
-        const diff = currentBeta - targetBeta;
 
         if (currentBeta > upperLimit) {
             const adjustAmount = (targetBeta * totalAssets - weightedBeta) / 2;
