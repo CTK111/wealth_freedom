@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智富導航：Beta 1.2 自由平衡儀</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; transition: all 0.2s ease; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Noto Sans TC', 'Montserrat', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard {
+            max-width: 1100px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard { grid-template-columns: 1fr 1fr; }
+        }
+
+        header {
+            grid-column: 1 / -1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--card-bg);
+        }
+
+        h1 { margin: 0; font-size: 26px; letter-spacing: 2px; color: var(--accent-gold); }
+        h1 span { color: var(--text-light); font-weight: 400; font-size: 16px; display: block; }
+
+        @media (min-width: 576px) {
+            h1 span { display: inline; margin-left: 10px; }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .beta-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .gauge-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 20px 0;
+        }
+
+        .gauge-svg { transform: rotate(-90deg); width: 100%; height: 100%; }
+        .gauge-bg { fill: none; stroke: #334155; stroke-width: 12; }
+        .gauge-fill { 
+            fill: none; 
+            stroke: var(--accent-green); 
+            stroke-width: 12; 
+            stroke-dasharray: 440; 
+            stroke-dashoffset: 440; 
+            stroke-linecap: round;
+        }
+
+        .beta-value {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 42px;
+            font-weight: 700;
+        }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; color: var(--text-muted); font-size: 14px; padding-bottom: 10px; }
+        td { padding: 12px 4px; border-bottom: 1px solid #334155; }
+        
+        input, select {
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 8px;
+            border-radius: 6px;
+            width: 100%;
+            font-family: inherit;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--accent-gold);
+        }
+
+        .action-banner {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
+            border-left: 5px solid var(--accent-gold);
+            padding: 25px;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        @media (min-width: 768px) {
+            .action-banner { flex-direction: row; justify-content: space-between; align-items: center; }
+        }
+
+        .rebalance-result { font-size: 18px; }
+        .rebalance-result b { color: var(--accent-gold); font-size: 22px; }
+
+        .btn-add {
+            background: transparent;
+            color: var(--accent-green);
+            border: 1px dashed var(--accent-green);
+            padding: 10px;
+            width: 100%;
+            margin-top: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .btn-add:hover { background: rgba(16, 185, 129, 0.1); }
+        
+        .btn-delete {
+            background: transparent;
+            color: var(--danger);
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <header>
+        <h1>智富導航 <span>Wealth Navigation System</span></h1>
+        <div style="color: var(--text-muted); font-size: 14px;">
+            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 本地記憶已同步
+        </div>
+    </header>
+
+    <div class="card beta-display">
+        <h3 style="margin:0">當前組合總 Beta 曝險</h3>
+        <div class="gauge-container">
+            <svg class="gauge-svg" viewBox="0 0 160 160">
+                <circle class="gauge-bg" cx="80" cy="80" r="70"></circle>
+                <circle id="gauge-fill" class="gauge-fill" cx="80" cy="80" r="70"></circle>
+            </svg>
+            <div class="beta-value" id="current-beta">1.20x</div>
+        </div>
+        <p style="color: var(--text-muted); margin:0;">目標安全值: <b style="color:white">1.2x</b> | 寬限範圍: <b style="color:white">±10%</b></p>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top:0">自由資產配置艙</h3>
+        <table id="asset-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">代號</th>
+                    <th style="width: 30%;">類型</th>
+                    <th style="width: 20%;">現價</th>
+                    <th style="width: 20%;">股數</th>
+                    <th style="width: 5%;"></th>
+                </tr>
+            </thead>
+            <tbody id="asset-body">
+                </tbody>
+        </table>
+        <button class="btn-add" onclick="addRow()"><i class="fa-solid fa-plus"></i> 新增資產欄位</button>
+
+        <hr style="border: 0; border-top: 1px solid #334155; margin: 25px 0;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <label style="font-weight: bold; color: var(--text-muted);">儲備現金部位 (元)</label>
+            <input type="number" id="cash-value" value="400000" style="width:160px; text-align: right;" oninput="updateAndSave()">
+        </div>
+    </div>
+
+    <div class="action-banner">
+        <div class="rebalance-result" id="final-advice">
+            導航系統評估中...
+        </div>
+        <div style="text-align: right;">
+            <div style="font-size: 14px; color: var(--text-muted);">總資產自由估值</div>
+            <div id="total-assets" style="font-size: 28px; font-weight: 700; color: white;">$0</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 網頁載入時，先讀取之前存下來的資料
+    window.onload = function() {
+        const savedAssets = localStorage.getItem('wealth_assets');
+        const savedCash = localStorage.getItem('wealth_cash');
+        
+        if (savedCash !== null) {
+            document.getElementById('cash-value').value = savedCash;
+        }
+
+        if (savedAssets) {
+            const assets = JSON.parse(savedAssets);
+            assets.forEach(asset => addRow(asset.code, asset.type, asset.price, asset.qty));
+        } else {
+            // 如果是第一次打開，給一個預設欄位
+            addRow("00631L", "2", 200, 3000);
+        }
+        update();
+    }
+
+    function addRow(code="", type="2", price=0, qty=0) {
+        const tbody = document.getElementById('asset-body');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" value="${code}" placeholder="代號" oninput="updateAndSave()"></td>
+            <td>
+                <select onchange="updateAndSave()">
+                    <option value="2" ${type === "2" ? "selected" : ""}>槓桿正2 (2x)</option>
+                    <option value="1" ${type === "1" ? "selected" : ""}>一般原型 (1x)</option>
+                </select>
+            </td>
+            <td><input type="number" value="${price}" oninput="updateAndSave()"></td>
+            <td><input type="number" value="${qty}" oninput="updateAndSave()"></td>
+            <td><button class="btn-delete" onclick="deleteRow(this)"><i class="fa-solid fa-trash-can"></i></button></td>
+        `;
+        tbody.appendChild(tr);
+        updateAndSave();
+    }
+
+    function deleteRow(btn) {
+        btn.closest('tr').remove();
+        updateAndSave();
+    }
+
+    function updateAndSave() {
+        update();
+        saveData();
+    }
+
+    function saveData() {
+        const rows = document.querySelectorAll('#asset-body tr');
+        const assets = [];
+        
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const type = row.querySelector('select').value;
+            assets.push({
+                code: inputs[0].value,
+                type: type,
+                price: inputs[1].value,
+                qty: inputs[2].value
+            });
+        });
+
+        localStorage.setItem('wealth_assets', JSON.stringify(assets));
+        localStorage.setItem('wealth_cash', document.getElementById('cash-value').value);
+    }
+
+    function update() {
+        const rows = document.querySelectorAll('#asset-body tr');
+        let totalStockValue = 0;
+        let weightedBeta = 0;
+        const cash = parseFloat(document.getElementById('cash-value').value) || 0;
+
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            const type = row.querySelector('select').value;
+            const price = parseFloat(inputs[1].value) || 0;
+            const qty = parseFloat(inputs[2].value) || 0;
+            const value = price * qty;
+            
+            totalStockValue += value;
+            weightedBeta += (value * parseFloat(type));
+        });
+
+        const totalAssets = totalStockValue + cash;
+        const currentBeta = totalAssets > 0 ? (weightedBeta / totalAssets) : 0;
+        const targetBeta = 1.2;
+        
+        document.getElementById('total-assets').innerText = '$' + totalAssets.toLocaleString('zh-TW');
+        document.getElementById('current-beta').innerText = currentBeta.toFixed(2) + 'x';
+        
+        const fill = document.getElementById('gauge-fill');
+        const percentage = Math.min((currentBeta / 2.4), 1); 
+        const offset = 440 - (440 * percentage);
+        fill.style.strokeDashoffset = offset;
+        
+        const adviceDiv = document.getElementById('final-advice');
+
+        if (totalAssets === 0) {
+            adviceDiv.innerHTML = "請輸入資產數據以開啟導航";
+            return;
+        }
+
+        const upperLimit = targetBeta * 1.1; 
+        const lowerLimit = targetBeta * 0.9; 
+        const diff = currentBeta - targetBeta;
+
+        if (currentBeta > upperLimit) {
+            const adjustAmount = (targetBeta * totalAssets - weightedBeta) / 2;
+            adviceDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> 訊號：曝險過高！建議 <b>賣出正二部位換回現金 $${Math.abs(Math.round(adjustAmount)).toLocaleString('zh-TW')}</b> 元`;
+        } else if (currentBeta < lowerLimit) {
+            const adjustAmount = (targetBeta * totalAssets - weightedBeta) / 2;
+            adviceDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-gold)"></i> 訊號：偏離常軌！建議 <b>把現金轉入正二部位 $${Math.abs(Math.round(adjustAmount)).toLocaleString('zh-TW')}</b> 元`;
+        } else {
+            if (currentBeta > 1.2) {
+                adviceDiv.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i> 狀態：航線正常。目前 Beta (${currentBeta.toFixed(2)}x) 在上限之內 (${upperLimit.toFixed(2)}x)，無需動作。`;
+            } else if (currentBeta < 1.2) {
+                adviceDiv.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i> 狀態：航線正常。目前 Beta (${currentBeta.toFixed(2)}x) 在下限之內 (${lowerLimit.toFixed(2)}x)，無需動作。`;
+            } else {
+                adviceDiv.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i> 狀態：航線正常。Beta 為準確的 ${targetBeta.toFixed(2)}x，無需動作。`;
+            }
+        }
+    }
+</script>
+</body>
+</html>
