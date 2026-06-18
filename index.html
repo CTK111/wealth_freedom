@@ -106,17 +106,15 @@
             font-weight: 700;
         }
 
-        /* --- 修正手機版表格擠壓的關鍵 CSS --- */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; }
         th { text-align: left; color: var(--text-muted); font-size: 13px; padding-bottom: 8px; }
         td { padding: 10px 2px; border-bottom: 1px solid #334155; vertical-align: middle; }
         
-        /* 依比例分配表格寬度，防止大位數爆開 */
-        th:nth-child(1), td:nth-child(1) { width: 23%; } /* 代號 */
-        th:nth-child(2), td:nth-child(2) { width: 29%; } /* 類型 */
-        th:nth-child(3), td:nth-child(3) { width: 21%; } /* 現價 */
-        th:nth-child(4), td:nth-child(4) { width: 21%; } /* 股數 */
-        th:nth-child(5), td:nth-child(5) { width: 6%; text-align: right; } /* 刪除 */
+        th:nth-child(1), td:nth-child(1) { width: 23%; }
+        th:nth-child(2), td:nth-child(2) { width: 29%; }
+        th:nth-child(3), td:nth-child(3) { width: 21%; }
+        th:nth-child(4), td:nth-child(4) { width: 21%; }
+        th:nth-child(5), td:nth-child(5) { width: 6%; text-align: right; }
 
         input, select {
             background: #0f172a;
@@ -132,13 +130,17 @@
         }
 
         input[type="text"] { text-align: left; padding-left: 6px; }
+        input:focus, select:focus { border-color: var(--accent-gold); outline: none; }
 
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--accent-gold);
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
         }
+        .setting-row label { font-weight: bold; color: var(--text-muted); font-size: 14px; }
+        .setting-row input { width: 50%; max-width: 180px; text-align: right; }
 
-        /* 下方看盤看建議區：增加自動折行與自適應字體大小 */
         .action-banner {
             grid-column: 1 / -1;
             background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%);
@@ -148,7 +150,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            word-break: break-all; /* 防止連續英文字母或數字灌爆版面 */
+            word-break: break-all;
         }
 
         @media (min-width: 768px) {
@@ -156,7 +158,7 @@
         }
 
         .rebalance-result { font-size: 16px; line-height: 1.5; flex: 1; }
-        .rebalance-result b { color: var(--accent-gold); font-size: 18px; word-wrap: break-word; }
+        .rebalance-result b { color: var(--accent-gold); font-size: 18px; }
 
         @media (min-width: 576px) {
             .rebalance-result { font-size: 18px; }
@@ -167,6 +169,8 @@
         @media (min-width: 768px) {
             .total-display-box { text-align: right; }
         }
+
+        .roi-display { font-size: 16px; font-weight: bold; margin-top: 4px; }
 
         .btn-add {
             background: transparent;
@@ -180,7 +184,6 @@
             font-weight: bold;
             font-size: 14px;
         }
-
         .btn-add:hover { background: rgba(16, 185, 129, 0.1); }
         
         .btn-delete {
@@ -201,7 +204,7 @@
     <header>
         <h1>智富導航 <span>Wealth Navigation System</span></h1>
         <div style="color: var(--text-muted); font-size: 13px;">
-            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 記憶同步
+            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 記憶同步中
         </div>
     </header>
 
@@ -236,9 +239,13 @@
 
         <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
         
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <label style="font-weight: bold; color: var(--text-muted); font-size: 14px;">儲備現金部位 (元)</label>
-            <input type="number" id="cash-value" value="400000" style="width:50%; max-width:180px; text-align: right;" oninput="updateAndSave()">
+        <div class="setting-row">
+            <label>初始投入本金 (元)</label>
+            <input type="number" id="initial-investment" value="1000000" oninput="updateAndSave()">
+        </div>
+        <div class="setting-row">
+            <label>儲備現金部位 (元)</label>
+            <input type="number" id="cash-value" value="400000" oninput="updateAndSave()">
         </div>
     </div>
 
@@ -248,7 +255,8 @@
         </div>
         <div class="total-display-box">
             <div style="font-size: 13px; color: var(--text-muted);">總資產自由估值</div>
-            <div id="total-assets" style="font-size: 24px; font-weight: 700; color: white; white-space: nowrap;">$0</div>
+            <div id="total-assets" style="font-size: 26px; font-weight: 700; color: white; white-space: nowrap;">$0</div>
+            <div id="roi-display" class="roi-display">報酬率: 0.00%</div>
         </div>
     </div>
 </div>
@@ -257,16 +265,16 @@
     window.onload = function() {
         const savedAssets = localStorage.getItem('wealth_assets');
         const savedCash = localStorage.getItem('wealth_cash');
+        const savedInitial = localStorage.getItem('wealth_initial');
         
-        if (savedCash !== null) {
-            document.getElementById('cash-value').value = savedCash;
-        }
+        if (savedCash !== null) document.getElementById('cash-value').value = savedCash;
+        if (savedInitial !== null) document.getElementById('initial-investment').value = savedInitial;
 
         if (savedAssets) {
             const assets = JSON.parse(savedAssets);
             assets.forEach(asset => addRow(asset.code, asset.type, asset.price, asset.qty));
         } else {
-            addRow("00631L", "2", 200, 3000);
+            addRow("00631L", "2", 200, 3000); // 預設 200元 * 3000股 = 60萬
         }
         update();
     }
@@ -317,6 +325,7 @@
 
         localStorage.setItem('wealth_assets', JSON.stringify(assets));
         localStorage.setItem('wealth_cash', document.getElementById('cash-value').value);
+        localStorage.setItem('wealth_initial', document.getElementById('initial-investment').value);
     }
 
     function update() {
@@ -324,6 +333,7 @@
         let totalStockValue = 0;
         let weightedBeta = 0;
         const cash = parseFloat(document.getElementById('cash-value').value) || 0;
+        const initial = parseFloat(document.getElementById('initial-investment').value) || 0;
 
         rows.forEach(row => {
             const inputs = row.querySelectorAll('input');
@@ -340,14 +350,36 @@
         const currentBeta = totalAssets > 0 ? (weightedBeta / totalAssets) : 0;
         const targetBeta = 1.2;
         
+        // 1. 更新資產總額
         document.getElementById('total-assets').innerText = '$' + totalAssets.toLocaleString('zh-TW');
         document.getElementById('current-beta').innerText = currentBeta.toFixed(2) + 'x';
         
+        // 2. 計算並更新總報酬率 (ROI)
+        const roiDisplay = document.getElementById('roi-display');
+        if (initial > 0) {
+            const roi = ((totalAssets - initial) / initial) * 100;
+            if (roi > 0) {
+                roiDisplay.innerText = `報酬率: +${roi.toFixed(2)}%`;
+                roiDisplay.style.color = "var(--accent-green)"; // 獲利顯示綠色
+            } else if (roi < 0) {
+                roiDisplay.innerText = `報酬率: ${roi.toFixed(2)}%`;
+                roiDisplay.style.color = "var(--danger)"; // 虧損顯示紅色
+            } else {
+                roiDisplay.innerText = `報酬率: 0.00%`;
+                roiDisplay.style.color = "white";
+            }
+        } else {
+            roiDisplay.innerText = `報酬率: --`;
+            roiDisplay.style.color = "var(--text-muted)";
+        }
+        
+        // 3. 儀表板指針
         const fill = document.getElementById('gauge-fill');
         const percentage = Math.min((currentBeta / 2.4), 1); 
         const offset = 440 - (440 * percentage);
         fill.style.strokeDashoffset = offset;
         
+        // 4. 再平衡建議邏輯
         const adviceDiv = document.getElementById('final-advice');
 
         if (totalAssets === 0) {
