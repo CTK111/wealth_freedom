@@ -110,7 +110,7 @@
         th { text-align: left; color: var(--text-muted); font-size: 13px; padding-bottom: 8px; }
         td { padding: 10px 2px; border-bottom: 1px solid #334155; vertical-align: middle; }
         
-        th:nth-child(1), td:nth-child(1) { width: 23%; }
+        th:nth-child(1), td:nth-child(2) { width: 23%; }
         th:nth-child(2), td:nth-child(2) { width: 29%; }
         th:nth-child(3), td:nth-child(3) { width: 21%; }
         th:nth-child(4), td:nth-child(4) { width: 21%; }
@@ -140,7 +140,6 @@
         .setting-row label { font-weight: bold; color: var(--text-muted); font-size: 14px; }
         .setting-row input { width: 50%; max-width: 180px; text-align: right; }
 
-        /* 新增：建議建倉區塊樣式 */
         .setup-box {
             background: #0f172a;
             border: 1px solid #334155;
@@ -304,7 +303,6 @@
 </div>
 
 <script>
-    // 暫存建倉計算出來的數值，方便一鍵套用
     let calculatedShares = 0;
     let calculatedCash = 0;
 
@@ -327,7 +325,6 @@
         update();
     }
 
-    // 新增：動態計算建倉股數與現金
     function calcSetup() {
         const initial = parseFloat(document.getElementById('initial-investment').value) || 0;
         const targetPrice = parseFloat(document.getElementById('setup-target-price').value) || 0;
@@ -338,7 +335,6 @@
             return;
         }
 
-        // 1.2 Beta 策略：正二配 60%，現金配 40%
         const targetStockFund = initial * 0.6;
         calculatedCash = Math.round(initial * 0.4);
         calculatedShares = Math.round(targetStockFund / targetPrice);
@@ -350,18 +346,15 @@
         localStorage.setItem('wealth_target_price', targetPrice);
     }
 
-    // 新增：一鍵帶入下方配置艙
     function applySetup() {
         if (calculatedShares <= 0) return;
         
-        // 清空現有的資產表格，重新建立一個乾淨的正二欄位
         const tbody = document.getElementById('asset-body');
         tbody.innerHTML = "";
         
         const targetPrice = parseFloat(document.getElementById('setup-target-price').value) || 0;
         addRow("00631L", "2", targetPrice, calculatedShares);
         
-        // 帶入現金
         document.getElementById('cash-value').value = calculatedCash;
         
         updateAndSave();
@@ -417,20 +410,26 @@
     }
 
     function update() {
-        calcSetup(); // 每次本金改變，同步重算建倉建議
+        calcSetup(); 
         
         const rows = document.querySelectorAll('#asset-body tr');
         let totalStockValue = 0;
         let weightedBeta = 0;
+        let firstRowPrice = 0; // 用來記錄第一個標的（正二）的價格
+        
         const cash = parseFloat(document.getElementById('cash-value').value) || 0;
         const initial = parseFloat(document.getElementById('initial-investment').value) || 0;
 
-        rows.forEach(row => {
+        rows.forEach((row, index) => {
             const inputs = row.querySelectorAll('input');
             const type = row.querySelector('select').value;
             const price = parseFloat(inputs[1].value) || 0;
             const qty = parseFloat(inputs[2].value) || 0;
             const value = price * qty;
+            
+            if (index === 0) {
+                firstRowPrice = price; // 抓取配置艙內第一檔股票的現價
+            }
             
             totalStockValue += value;
             weightedBeta += (value * parseFloat(type));
@@ -478,10 +477,30 @@
 
         if (currentBeta > upperLimit) {
             const adjustAmount = (targetBeta * totalAssets - weightedBeta) / 2;
-            adviceDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> 訊號：曝險過高！建議 <b>賣出正二部位換回現金 $${Math.abs(Math.round(adjustAmount)).toLocaleString('zh-TW')}</b> 元`;
+            const absAmount = Math.abs(Math.round(adjustAmount));
+            
+            // 【核心修改】新增自動換算股數
+            let sharesText = "";
+            if (firstRowPrice > 0) {
+                const shares = Math.round(absAmount / firstRowPrice);
+                sharesText = `（約 <b>${shares.toLocaleString('zh-TW')}</b> 股）`;
+            }
+
+            adviceDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--danger)"></i> 訊號：曝險過高！建議 <b>賣出正二部位 ${sharesText}換回現金 $${absAmount.toLocaleString('zh-TW')}</b> 元`;
+        
         } else if (currentBeta < lowerLimit) {
             const adjustAmount = (targetBeta * totalAssets - weightedBeta) / 2;
-            adviceDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-gold)"></i> 訊號：偏離常軌！建議 <b>把現金轉入正二部位 $${Math.abs(Math.round(adjustAmount)).toLocaleString('zh-TW')}</b> 元`;
+            const absAmount = Math.abs(Math.round(adjustAmount));
+            
+            // 【核心修改】新增自動換算股數
+            let sharesText = "";
+            if (firstRowPrice > 0) {
+                const shares = Math.round(absAmount / firstRowPrice);
+                sharesText = `（約 <b>${shares.toLocaleString('zh-TW')}</b> 股）`;
+            }
+
+            adviceDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-gold)"></i> 訊號：偏離常軌！建議 <b>把現金轉入正二部位 ${sharesText}$${absAmount.toLocaleString('zh-TW')}</b> 元`;
+        
         } else {
             if (currentBeta > 1.2) {
                 adviceDiv.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--accent-green)"></i> 狀態：航線正常。目前 Beta (${currentBeta.toFixed(2)}x) 在上限之內 (${upperLimit.toFixed(2)}x)，無需動作。`;
