@@ -136,7 +136,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
         }
         .setting-row label { font-weight: bold; color: var(--text-muted); font-size: 14px; }
         .setting-row input { width: 50%; max-width: 180px; text-align: right; }
@@ -204,7 +203,7 @@
     <header>
         <h1>智富導航 <span>Wealth Navigation System</span></h1>
         <div style="color: var(--text-muted); font-size: 13px;">
-            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 記憶同步中
+            <i class="fa-solid fa-floppy-disk" style="color:var(--accent-green)"></i> 記憶同步
         </div>
     </header>
 
@@ -221,6 +220,11 @@
     </div>
 
     <div class="card">
+        <div class="setting-row" style="margin-bottom: 20px;">
+            <label><i class="fa-solid fa-vault" style="color: var(--accent-gold); margin-right: 4px;"></i> 初始投入本金 (元)</label>
+            <input type="number" id="initial-investment" value="1000000" oninput="updateAndSave()">
+        </div>
+
         <h3 style="margin-top:0; font-size: 16px;">自由資產配置艙</h3>
         <table id="asset-table">
             <thead>
@@ -240,11 +244,7 @@
         <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
         
         <div class="setting-row">
-            <label>初始投入本金 (元)</label>
-            <input type="number" id="initial-investment" value="1000000" oninput="updateAndSave()">
-        </div>
-        <div class="setting-row">
-            <label>儲備現金部位 (元)</label>
+            <label><i class="fa-solid fa-wallet" style="color: var(--text-muted); margin-right: 4px;"></i> 儲備現金部位 (元)</label>
             <input type="number" id="cash-value" value="400000" oninput="updateAndSave()">
         </div>
     </div>
@@ -274,7 +274,7 @@
             const assets = JSON.parse(savedAssets);
             assets.forEach(asset => addRow(asset.code, asset.type, asset.price, asset.qty));
         } else {
-            addRow("00631L", "2", 200, 3000); // 預設 200元 * 3000股 = 60萬
+            addRow("00631L", "2", 200, 3000); 
         }
         update();
     }
@@ -350,20 +350,18 @@
         const currentBeta = totalAssets > 0 ? (weightedBeta / totalAssets) : 0;
         const targetBeta = 1.2;
         
-        // 1. 更新資產總額
         document.getElementById('total-assets').innerText = '$' + totalAssets.toLocaleString('zh-TW');
         document.getElementById('current-beta').innerText = currentBeta.toFixed(2) + 'x';
         
-        // 2. 計算並更新總報酬率 (ROI)
         const roiDisplay = document.getElementById('roi-display');
         if (initial > 0) {
             const roi = ((totalAssets - initial) / initial) * 100;
             if (roi > 0) {
                 roiDisplay.innerText = `報酬率: +${roi.toFixed(2)}%`;
-                roiDisplay.style.color = "var(--accent-green)"; // 獲利顯示綠色
+                roiDisplay.style.color = "var(--accent-green)"; 
             } else if (roi < 0) {
                 roiDisplay.innerText = `報酬率: ${roi.toFixed(2)}%`;
-                roiDisplay.style.color = "var(--danger)"; // 虧損顯示紅色
+                roiDisplay.style.color = "var(--danger)"; 
             } else {
                 roiDisplay.innerText = `報酬率: 0.00%`;
                 roiDisplay.style.color = "white";
@@ -373,13 +371,11 @@
             roiDisplay.style.color = "var(--text-muted)";
         }
         
-        // 3. 儀表板指針
         const fill = document.getElementById('gauge-fill');
         const percentage = Math.min((currentBeta / 2.4), 1); 
         const offset = 440 - (440 * percentage);
         fill.style.strokeDashoffset = offset;
         
-        // 4. 再平衡建議邏輯
         const adviceDiv = document.getElementById('final-advice');
 
         if (totalAssets === 0) {
